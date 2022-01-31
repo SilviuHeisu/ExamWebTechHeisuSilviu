@@ -44,11 +44,12 @@ const CrewMember = sequelize.define("crewmember", {
     },
   },
   role: {
-    type: Sequelize.DataTypes.ENUM("CAPTAIN", "BOATSMAIN"),
+    type: Sequelize.DataTypes.ENUM("CAPTAIN", "BOATSWAIN"),
   },
 });
 Ship.hasMany(CrewMember);
 const app = express();
+app.use(cors());
 app.use(express());
 app.use(bodyParser.json());
 
@@ -57,6 +58,14 @@ app.get("/sync", async (req, res) => {
     await sequelize.sync({ force: true });
 
     res.status(201).json({ message: "Tables created" });
+  } catch (err) {
+    console.warn(err);
+    res.status(500).json({ message: "some error" });
+  }
+});
+app.get("/roles", async (req, res) => {
+  try {
+    res.status(205).json(CrewMember.rawAttributes.role.values);
   } catch (err) {
     console.warn(err);
     res.status(500).json({ message: "some error" });
@@ -125,81 +134,12 @@ app.delete("/ships/:shipId", async (req, res) => {
     res.status(500).json({ message: "some error" });
   }
 });
-app.get("/moviesCategoryFilter/:category", async (req, res) => {
-  try {
-    const movies = await Movie.findAll({
-      where: { category: req.params.category },
-    });
-
-    res.status(200).json(movies);
-  } catch (err) {
-    console.warn(err);
-    res.status(500).json({ message: "some error" });
-  }
-});
-
-app.get("/moviesFilter/:title", async (req, res) => {
-  try {
-    const movies = await Movie.findAll({
-      where: { title: req.params.title },
-    });
-
-    res.status(200).json(movies);
-  } catch (err) {
-    console.warn(err);
-    res.status(500).json({ message: "some error" });
-  }
-});
-
-// sort alfabetic pe title
-//   app.get("/moviesSorted", async (req, res) => {
-
-//     try {
-//       const movies = await Movie.findAll({
-//           order:[['title', 'ASC']]
-
-//       }).then((movies)=>{
-//         res.status(200).json(movies);
-//       })
-
-//     } catch (err) {
-//       console.warn(err);
-//       res.status(500).json({ message: "some error" });
-//     }
-//   });
-
-app.get("/moviesSort", async (req, res) => {
-  try {
-    const movies = await Movie.findAll({});
-    const moviesSorted = movies.sort((e, i) => e.title.localeCompare(i.title));
-    console.log(moviesSorted);
-    res.status(200).json(moviesSorted);
-  } catch (err) {
-    console.warn(err);
-    res.status(500).json({ message: "some error" });
-  }
-});
-
-app.get("/moviesPagination", async (req, res) => {
-  try {
-    Movie.findAndCountAll({
-      limit: limit,
-      offset: countPagination,
-    }).then(function (result) {
-      res.status(202).json(result.rows);
-      countPagination += limit;
-    });
-  } catch (err) {
-    console.warn(err);
-    res.status(500).json({ message: "some error" });
-  }
-});
 
 app.get("/ships/:shipId/crewmembers", async (req, res) => {
   try {
-    const ship = await Ship.findByPk(req.params.id);
+    const ship = await Ship.findByPk(req.params.shipId);
     if (ship) {
-      const crewmembers = await movie.getCrewmembers();
+      const crewmembers = await ship.getCrewmembers();
 
       res.status(200).json(crewmembers);
     } else {
